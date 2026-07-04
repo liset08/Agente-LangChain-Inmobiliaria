@@ -1,0 +1,25 @@
+# Variables de entorno / secretos
+.env
+.env.*
+!.env.example
+
+# Credenciales
+credentials/*.json
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Sistema
+.DS_Store
+
+# Editor
+.vscode/
