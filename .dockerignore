@@ -1,0 +1,26 @@
+# Secretos: nunca deben entrar a la imagen
+.env
+.env.*
+!.env.example
+credentials/*.json
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Git / IDE / sistema
+.git/
+.gitignore
+.vscode/
+.claude/
+.DS_Store
+
+# Docs y notebooks no necesarios en runtime
+*.md
