@@ -115,7 +115,6 @@ LangChain-AgenteIA-MultiTool-Qdrant/    # (nombre destino; renombrar carpeta des
 │   ├── rag.py                       # Script de ingesta a Qdrant (split + embeddings + upsert)
 │   └── data/                        # Fuentes de la base de conocimiento (.md/.txt)
 │       └── base_conocimiento_alpha_state.md
-├── credentials/                     # Clave JSON del service account (no versionar)
 ├── agent.py                         # ORQUESTADOR v1: loop manual (didáctico, 1 ronda de tools)
 ├── agent_v2.py                      # ORQUESTADOR v2: create_agent (multironda + middleware); mismo contrato
 ├── main.py                          # CANAL CLI (terminal); reusa chat_con_agente
@@ -173,8 +172,10 @@ incluir "Usa esta herramienta cuando…" y, si aplica, "NO uses…".
   service account (scope `spreadsheets.readonly`); lee todas las filas con
   `get_all_records()` (fila 1 = cabecera), filtra por coincidencia de texto en cualquier
   columna si `filtro` no está vacío, y devuelve las filas formateadas o mensaje de
-  "no encontré". Cliente perezoso: la clave JSON se valida al importar; la conexión se abre
-  en la primera consulta.
+  "no encontré". La clave del service account se lee completa (JSON) desde la variable de
+  entorno `GOOGLE_SHEETS_SERVICE_ACCOUNT_KEY` (no desde un archivo), para poder desplegar en
+  plataformas como EasyPanel sin subir el .json. Cliente perezoso: la clave se parsea y
+  valida al importar (`json.loads`); la conexión a Google se abre en la primera consulta.
 
 ### 5.3 Memoria — `conversation_history/`
 - `crear_tabla_historial() -> None` — crea la tabla si no existe (idempotente).
@@ -231,7 +232,7 @@ aquí). No duplicar contenido de la base de conocimiento.
 | `QDRANT_COLLECTION` | ➖ (default `alpha-state-conocimiento`) | Colección Qdrant de la base de conocimiento |
 | `TAVILY_API_KEY` | ✅ | Búsqueda en internet |
 | `GOOGLE_SHEETS_SPREADSHEET_ID` | ✅ | ID del Google Sheet de departamentos (entre `/d/` y `/edit` de la URL) |
-| `GOOGLE_SHEETS_CREDENTIALS_FILE` | ➖ (default `credentials/google-service-account.json`) | Ruta a la clave JSON del service account (relativa al proyecto o absoluta) |
+| `GOOGLE_SHEETS_SERVICE_ACCOUNT_KEY` | ✅ | Contenido completo del JSON de la clave del service account, como string (permite desplegar en EasyPanel sin subir el archivo .json) |
 | `GOOGLE_SHEETS_WORKSHEET` | ➖ (default: primera hoja) | Nombre de la pestaña/hoja a leer |
 | `DB_USER`, `DB_PASSWORD`, `DB_HOST` | ✅ | PostgreSQL/Supabase (historial) |
 | `DB_PORT` | ➖ (default `5432`) | Puerto Postgres |
