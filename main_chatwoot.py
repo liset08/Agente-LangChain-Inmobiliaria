@@ -217,7 +217,13 @@ def read_root():
         "version": "1.0.0",
         "agent": "Agente D (RAG + Internet + Memoria)",
         "model": "GPT-4.1",
-        "tools": ["buscar_datapath", "buscar_internet", "obtener_fecha_hora"],
+        "tools": [
+            "buscar_datapath",
+            "buscar_internet",
+            "obtener_fecha_hora",
+            "buscar_departamentos_alquiler",
+            "consultar_pagos_mantenimiento",
+        ],
         "chatwoot_configured": all([CHATWOOT_BASE_URL, CHATWOOT_ACCOUNT_ID, CHATWOOT_API_TOKEN]),
         "bot_label": BOT_LABEL,
         "status": "ready"
@@ -280,7 +286,8 @@ if __name__ == "__main__":
     print("=" * 60)
     print(f"🤖 Agente: D (RAG + Internet + Memoria)")
     print(f"🧠 Modelo: GPT-4.1")
-    print(f"🔧 Tools: buscar_datapath, buscar_internet, obtener_fecha_hora")
+    print(f"🔧 Tools: buscar_datapath, buscar_internet, obtener_fecha_hora, "
+          f"buscar_departamentos_alquiler, consultar_pagos_mantenimiento")
     print(f"💾 Historial: PostgreSQL")
     print(f"🏷️  Etiqueta bot (handoff): {BOT_LABEL or 'ninguna'}")
     print(f"🚫 No responde si tiene tag: {TAG_IA_OFF}")

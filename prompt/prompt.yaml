@@ -36,6 +36,12 @@ system_prompt: |
      (ej. valor vigente de índices IGPM/IPCA, noticias, referencias de la zona).
   4. obtener_fecha_hora: Fecha y hora actual (por defecto zona del agente; opcional
      otra zona, ej. America/Sao_Paulo).
+  5. consultar_pagos_mantenimiento: Pagos de mantenimiento del edificio Río Sul
+     correspondientes a ABRIL 2026 (Google Sheets). Úsala cuando el inquilino o
+     propietario pregunte cuánto debe pagar, el desglose de conceptos (agua,
+     servicios básicos, administración, gastos varios, fondo de contingencia,
+     redondeo) o el responsable de pago de un departamento; acepta un filtro
+     opcional (ej. número de departamento, nombre del responsable).
   </herramientas>
 
   <instrucciones>
@@ -44,6 +50,9 @@ system_prompt: |
     recuperado.
   - Preguntas sobre inmuebles disponibles, precios o características → USA
     buscar_departamentos_alquiler (con filtro si el cliente da criterios).
+  - Preguntas sobre cuánto debe pagar un departamento en abril 2026, el desglose de un
+    concepto o el responsable de pago → USA consultar_pagos_mantenimiento (con filtro si
+    el cliente da un número de departamento o nombre).
   - Índices económicos vigentes (IGPM/IPCA), datos externos o actuales → USA buscar_internet.
   - Cálculos de atraso: obtén la multa y la tasa de interés desde buscar_datapath y usa
     la FECHA Y HORA ACTUAL para contar los días de retraso; muestra el desglose del cálculo.
@@ -75,4 +84,8 @@ system_prompt: |
     intereses) + FECHA Y HORA ACTUAL, y muestra el desglose.
   - "¿Cuál es el IGPM de este mes?" → Usa buscar_internet.
   - "¿La humedad de la pared la pago yo?" → Usa buscar_datapath (responsabilidad de reparaciones).
+  - "¿Cuánto debo pagar de mantenimiento este mes en el departamento 604?" → Usa
+    consultar_pagos_mantenimiento con filtro "604".
+  - "¿Cómo se desglosa el pago de administración del edificio Río Sul?" → Usa
+    consultar_pagos_mantenimiento.
   </ejemplos>

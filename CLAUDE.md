@@ -57,6 +57,11 @@ Cada requisito tiene un ID y un criterio de aceptación verificable (§10).
   alquilar (disponibilidad, precios, ubicaciones, características) → tool
   `buscar_departamentos_alquiler`, que lee un Google Sheet vía service account (solo lectura)
   y acepta un filtro opcional de texto.
+- **RF-13 (Pagos de mantenimiento):** preguntas sobre cuánto debe pagar un departamento en
+  abril 2026, el desglose de un concepto (agua, servicios básicos, administración, gastos
+  varios, fondo de contingencia, redondeo) o el responsable de pago → tool
+  `consultar_pagos_mantenimiento`, que lee un Google Sheet de pagos vía el mismo service
+  account (solo lectura) y acepta un filtro opcional de texto (nº de departamento o nombre).
 - **RF-05 (Memoria persistente):** cada conversación se identifica por `session_id` (UUID). El
   historial (mensajes user+assistant) se persiste en PostgreSQL y se recarga en cada turno.
 - **RF-06 (Continuidad de sesión):** en CLI, el usuario puede iniciar sesión nueva o continuar
@@ -110,7 +115,8 @@ LangChain-AgenteIA-MultiTool-Qdrant/    # (nombre destino; renombrar carpeta des
 │   ├── Base_de_conocimiento.py      # @tool buscar_datapath  (RAG Qdrant — Alpha State)
 │   ├── Busqueda_internet.py         # @tool buscar_internet  (Tavily)
 │   ├── Hora_y_fecha.py              # @tool obtener_fecha_hora (stdlib)
-│   └── google_sheets_departamentos_alquiler.py  # @tool buscar_departamentos_alquiler (Google Sheets)
+│   ├── google_sheets_departamentos_alquiler.py  # @tool buscar_departamentos_alquiler (Google Sheets)
+│   └── google_sheets_inquilinos_pagos_alquiler.py  # @tool consultar_pagos_mantenimiento (Google Sheets)
 ├── rag/
 │   ├── rag.py                       # Script de ingesta a Qdrant (split + embeddings + upsert)
 │   └── data/                        # Fuentes de la base de conocimiento (.md/.txt)
@@ -153,8 +159,8 @@ Si algo que no es ensamblado "va en el orquestador", está mal ubicado.
 - `main() -> None` — CLI interactivo con menú de sesión (nueva / continuar por UUID);
   solo adapta E/S de terminal. Selecciona orquestador con env `AGENT_VERSION`
   (default `1` = `agent.py`; `2` = `agent_v2.py`), ej. `AGENT_VERSION=2 python main.py`.
-- `tools = [buscar_datapath, buscar_internet, obtener_fecha_hora, buscar_departamentos_alquiler]`
-  (orden = registro).
+- `tools = [buscar_datapath, buscar_internet, obtener_fecha_hora, buscar_departamentos_alquiler,
+  consultar_pagos_mantenimiento]` (orden = registro).
 
 ### 5.2 Tools (`langchain_core.tools.@tool`)
 El **docstring de cada tool es su contrato con el modelo** (define cuándo se invoca). Deben
@@ -176,6 +182,13 @@ incluir "Usa esta herramienta cuando…" y, si aplica, "NO uses…".
   entorno `GOOGLE_SHEETS_SERVICE_ACCOUNT_KEY` (no desde un archivo), para poder desplegar en
   plataformas como EasyPanel sin subir el .json. Cliente perezoso: la clave se parsea y
   valida al importar (`json.loads`); la conexión a Google se abre en la primera consulta.
+- `consultar_pagos_mantenimiento(filtro: str = "") -> str` — Google Sheets vía `gspread`,
+  mismo service account y scope que `buscar_departamentos_alquiler` (misma
+  `GOOGLE_SHEETS_SERVICE_ACCOUNT_KEY`); lee el Sheet indicado por
+  `GOOGLE_SHEETS_PAYMENT_SPREADSHEET_ID` con `get_all_records()`, filtra por coincidencia de
+  texto en cualquier columna si `filtro` no está vacío (ej. nº de departamento o nombre del
+  responsable), y devuelve las filas formateadas o mensaje de "no encontré". Cliente perezoso,
+  igual patrón que `buscar_departamentos_alquiler`.
 
 ### 5.3 Memoria — `conversation_history/`
 - `crear_tabla_historial() -> None` — crea la tabla si no existe (idempotente).
@@ -218,7 +231,7 @@ agent_timezone: America/Lima   # overrideable por env AGENT_TIMEZONE
 Solo `system_prompt` como bloque `|`, estructurado en tags XML según la skill
 `agent-prompt-yaml-format` (`<rol>`, `<contexto_temporal>`, `<herramientas>`,
 `<instrucciones>`, `<reglas>`, `<ejemplos>`). Debe: definir persona (AlphaBot de Alpha
-State), listar las 4 tools y cuándo usar cada una, exigir español (portugués si el cliente
+State), listar las 5 tools y cuándo usar cada una, exigir español (portugués si el cliente
 lo usa), y referir a la FECHA/HORA inyectada en runtime (**no** escribir fecha/hora fija
 aquí). No duplicar contenido de la base de conocimiento.
 
@@ -234,6 +247,8 @@ aquí). No duplicar contenido de la base de conocimiento.
 | `GOOGLE_SHEETS_SPREADSHEET_ID` | ✅ | ID del Google Sheet de departamentos (entre `/d/` y `/edit` de la URL) |
 | `GOOGLE_SHEETS_SERVICE_ACCOUNT_KEY` | ✅ | Contenido completo del JSON de la clave del service account, como string (permite desplegar en EasyPanel sin subir el archivo .json) |
 | `GOOGLE_SHEETS_WORKSHEET` | ➖ (default: primera hoja) | Nombre de la pestaña/hoja a leer |
+| `GOOGLE_SHEETS_PAYMENT_SPREADSHEET_ID` | ✅ | ID del Google Sheet de pagos de mantenimiento (entre `/d/` y `/edit` de la URL) |
+| `GOOGLE_SHEETS_PAYMENT_WORKSHEET` | ➖ (default: primera hoja) | Nombre de la pestaña/hoja de pagos a leer |
 | `DB_USER`, `DB_PASSWORD`, `DB_HOST` | ✅ | PostgreSQL/Supabase (historial) |
 | `DB_PORT` | ➖ (default `5432`) | Puerto Postgres |
 | `DB_NAME` | ➖ (default `postgres`) | Base de datos |
@@ -263,7 +278,7 @@ el service account (API de Google Sheets habilitada), y (opcional) instancia **C
 3. **Secretos:** crear `.env` con las variables de §8.
 4. **Config:** escribir `model_config/model_config.yaml` y `prompt/prompt.yaml` (§7).
 5. **Memoria:** implementar `conversation_history/` (§5.3) con validación de env y `quote_plus`.
-6. **Tools:** implementar las 4 tools (§5.2), cada una con docstring rica, carga de env y manejo de errores; registrarlas en `tools/__init__.py`.
+6. **Tools:** implementar las 5 tools (§5.2), cada una con docstring rica, carga de env y manejo de errores; registrarlas en `tools/__init__.py`.
 7. **Orquestador:** implementar `agent.py` (§5.1, §5.4): carga YAML, `bind_tools`, `chat_con_agente`, inyección de fecha/hora por turno.
 8. **Canales:** implementar `main.py` (CLI, §5.1b) y `main_chatwoot.py` (§5.5), ambos reusando `chat_con_agente`.
 9. **Datos (ingesta):** colocar las fuentes de la base de conocimiento en `rag/data/` y ejecutar `python rag/rag.py` (o `--reset` para vaciar el índice primero). Los embeddings deben ser `text-embedding-ada-002` (mismo modelo que la tool RAG).
@@ -283,3 +298,4 @@ el service account (API de Google Sheets habilitada), y (opcional) instancia **C
 - **CA-09:** mensaje con "quiero hablar con un humano" → reetiqueta `atiende-humano` y no llama al agente (RF-08).
 - **CA-10:** faltando una env obligatoria (DB/Qdrant/Tavily/Google Sheets), el proceso falla al importar con `ValueError` claro (RNF-03).
 - **CA-11:** "¿Qué departamentos tienen para alquilar?" invoca `buscar_departamentos_alquiler` y responde con los datos del Google Sheet (RF-12).
+- **CA-12:** "¿Cuánto debe pagar el departamento 604 este mes?" invoca `consultar_pagos_mantenimiento` y responde con el desglose del Google Sheet de pagos (RF-13).

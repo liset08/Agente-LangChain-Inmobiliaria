@@ -105,6 +105,7 @@ def buscar_datapath(consulta: str) -> str:
 
     NO uses esta herramienta para:
     - Disponibilidad y precios de departamentos (usa buscar_departamentos_alquiler)
+    - Conocer sobre pagos de mantenimiento (usa consultar_pagos_mantenimiento)
     - Búsquedas generales en internet (usa buscar_internet)
 
     Args:
