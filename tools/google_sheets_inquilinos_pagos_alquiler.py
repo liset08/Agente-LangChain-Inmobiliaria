@@ -139,7 +139,9 @@ def _leer_pagos_interno(filtro: str = "") -> str:
         if filtro_norm:
             registros = [
                 r for r in registros
-                if filtro_norm in " ".join(str(v) for v in r.values()).lower()
+                if filtro_norm in " ".join(
+                    f"{k} {v}" for k, v in r.items()
+                ).lower()
             ]
             if not registros:
                 return (
